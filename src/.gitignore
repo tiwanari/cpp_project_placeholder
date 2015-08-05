@@ -1,0 +1,7 @@
+my_graph_db*
+debug*
+test*
+avx*
+test_avx*
+obj/
+
