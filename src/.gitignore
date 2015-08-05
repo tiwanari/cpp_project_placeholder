@@ -1,7 +1,5 @@
-my_graph_db*
+main*
 debug*
 test*
-avx*
-test_avx*
 obj/
 
