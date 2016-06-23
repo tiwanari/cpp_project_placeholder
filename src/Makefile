@@ -1,48 +1,66 @@
 h_files  := $(wildcard *.h)
 cc_files := $(wildcard *.cc)
-opts := 
+opts :=
 opts += -O3
 opts += -std=c++11
+opts += -Wall
+
 debug := -g
 
-GTESTDIR = ../googletest
-TEST_LIBRARY_DIR = ../lib/gen
-TEST_INCLUDE_DIR = $(GTESTDIR)/include
+LIBRARY_DIR = ../lib/gen
 
-TEST_STATIC_LIBRARY := $(TEST_LIBRARY_DIR)/libgtest.a
+GTEST_DIR = ../googletest
+TEST_INCLUDE_DIR = $(GTEST_DIR)/include
+TEST_STATIC_LIBRARY = $(LIBRARY_DIR)/libgtest.a
 
 test_cc_files := $(filter-out main.cc, $(cc_files))
 test_cc_files += $(wildcard unittest/*.cc)
-test_opts := -lpthread
-test_opts += -Wall
+UNAME = ${shell uname}
+ifeq ($(UNAME),Linux)
+	test_opts := -lpthread
+endif
 
+CXX = g++
 CXXFLAGS := $(opts)
+INCLUDES = -I.
+INCLUDES += -I$(TEST_INCLUDE_DIR)
 
-main : $(cc_files) $(h_files)
-	g++ -o $@ $(CXXFLAGS) $(cc_files)
+OBJDIR = ./obj
+objs = $(addprefix $(OBJDIR)/, $(cc_files:.cc=.o))
+test_objs = $(addprefix $(OBJDIR)/, $(test_cc_files:.cc=.o))
+
+main : $(objs) $(h_files)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $@ $(objs)
+
+$(OBJDIR)/%.o : %.cc
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $@ -c $<
 
 .PHONY: run
 run:
-	./my_graph_db
+	./main
 
-test: $(test_cc_files) $(h_files) $(TEST_STATIC_LIBRARY)
-	g++ -o $@ -I$(TEST_INCLUDE_DIR) $(CXXFLAGS) $(test_opts) $(test_cc_files) $(TEST_STATIC_LIBRARY)
-	./$@
+debug: $(objs) $(h_files)
+	$(CXX) $(debug) $(CXXFLAGS) $(INCLUDES) -o $@ $(objs)
+	gdb ./$@
 
 $(TEST_STATIC_LIBRARY):
-	cd ..; git submodule init; git submodule update
-	mkdir -p $(TEST_LIBRARY_DIR)
-	g++ -c -I$(TEST_INCLUDE_DIR) -I$(GTESTDIR) $(GTESTDIR)/src/gtest-all.cc -o $(GTESTDIR)/gtest-all.o
-	ar -rv $(TEST_STATIC_LIBRARY) $(GTESTDIR)/gtest-all.o
-	rm $(GTESTDIR)/gtest-all.o
+	git submodule init; git submodule update
+	$(CXX) -c -I$(TEST_INCLUDE_DIR) -I$(GTEST_DIR) $(GTEST_DIR)/src/gtest-all.cc -o $(GTEST_DIR)/gtest-all.o
+	mkdir -p $(LIBRARY_DIR)
+	ar -rv $(TEST_STATIC_LIBRARY) $(GTEST_DIR)/gtest-all.o
 
-debug: $(cc_files) $(h_files)
-	g++ $(debug) -o $@ $(CXXFLAGS) $(cc_files)
-	gdb ./$@
-	
+test: $(test_objs) $(h_files) $(TEST_STATIC_LIBRARY)
+	@mkdir -p $(OBJDIR)/unittest
+	$(CXX) $(CXXFLAGS) $(test_opts) $(TEST_INCLUDES) -o $@ $(test_objs)
+	./$@
+
+
 .PHONY: clean
 clean :
-	rm -f main
-	rm -f test
-	rm -f debug
-	rm -r *.dSYM
+	-rm -f ./obj/*.o
+	-rm -f ./obj/unittest/*.o
+	-rm -f main
+	-rm -f t
+	-rm -f debug
+	-rm -rf unittest/out/*
+	-rm -r *.dSYM
