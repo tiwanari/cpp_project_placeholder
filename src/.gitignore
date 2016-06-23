@@ -1,5 +1,5 @@
-main*
-debug*
-test*
+main
+debug
+test
+*.dSYM
 obj/
-
