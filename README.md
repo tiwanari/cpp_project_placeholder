@@ -21,7 +21,7 @@ make main
 
 will work and create `main` in the _src_ directory.
 
-After that,
+[Option] After that,
 
 ```
 make run
@@ -39,7 +39,7 @@ make test
 
 ## Debug
 If you want to use gdb for debugging,
-the following command will add the `-g` option 
+the following command will add the `-g` option
 while compiling
 and make `debug` in the _src_ directory.
 
