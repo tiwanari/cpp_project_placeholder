@@ -24,6 +24,10 @@ CXX = g++
 CXXFLAGS := $(opts)
 INCLUDES = -I.
 INCLUDES += -I$(TEST_INCLUDE_DIR)
+TEST_INCLUDES = $(INCLUDES)
+# LIBS =
+TEST_LIBS = $(LIBS)
+TEST_LIBS += $(TEST_STATIC_LIBRARY)
 
 OBJDIR = ./obj
 objs = $(addprefix $(OBJDIR)/, $(cc_files:.cc=.o))
@@ -33,6 +37,7 @@ main : $(objs) $(h_files)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $@ $(objs)
 
 $(OBJDIR)/%.o : %.cc
+	@mkdir -p $(OBJDIR)/unittest
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $@ -c $<
 
 .PHONY: run
@@ -49,9 +54,8 @@ $(TEST_STATIC_LIBRARY):
 	mkdir -p $(LIBRARY_DIR)
 	ar -rv $(TEST_STATIC_LIBRARY) $(GTEST_DIR)/gtest-all.o
 
-test: $(test_objs) $(h_files) $(TEST_STATIC_LIBRARY)
-	@mkdir -p $(OBJDIR)/unittest
-	$(CXX) $(CXXFLAGS) $(test_opts) $(TEST_INCLUDES) -o $@ $(test_objs)
+test: $(TEST_LIBS) $(test_objs) $(h_files)
+	$(CXX) $(CXXFLAGS) $(test_opts) $(TEST_INCLUDES) -o $@ $(test_objs) $(TEST_LIBS)
 	./$@
 
 
